@@ -59,5 +59,8 @@ config.h: | config.def.h
 	cp config.def.h $@
 
 dwl.o: config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
+dwl.so: dwl.o xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o
+	 #$(CC) -shared $(CFLAGS) -o dwl.so dwl.o xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o $(LDLIBS)
+	 $(CC) -shared -o dwl.so dwl.o xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o $(LDLIBS)
 
 dwl: xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o
