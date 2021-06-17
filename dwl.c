@@ -1201,6 +1201,11 @@ inputdevice(struct wl_listener *listener, void *data)
 	wlr_seat_set_capabilities(seat, caps);
 }
 
+const int KEYS_LEN = LENGTH(keys);
+//const wlr_keyboard_modifier _WLR_MODIFIER_CAPS = WLR_MODIFIER_CAPS;
+const uint32_t _WLR_MODIFIER_CAPS = WLR_MODIFIER_CAPS;
+static jl_function_t* keybinding_julia;
+
 int
 keybinding(uint32_t mods, xkb_keysym_t sym)
 {
@@ -1209,16 +1214,18 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	 * processing keys, rather than passing them on to the client for its own
 	 * processing.
 	 */
-	int handled = 0;
-	const Key *k;
-	for (k = keys; k < END(keys); k++) {
-		if (CLEANMASK(mods) == CLEANMASK(k->mod) &&
-				sym == k->keysym && k->func) {
-			k->func(&k->arg);
-			handled = 1;
-		}
-	}
-	return handled;
+	//int handled = 0;
+	//const Key *k;
+	//for (k = keys; k < END(keys); k++) {
+	//	if (CLEANMASK(mods) == CLEANMASK(k->mod) &&
+	//			sym == k->keysym && k->func) {
+	//		k->func(&k->arg);
+	//		handled = 1;
+	//	}
+	//}
+	//return handled;
+    void *ptr[] = {&mods, &sym};
+    return jl_unbox_int32(jl_call1(keybinding_julia, jl_box_voidpointer(ptr)));
 }
 
 void
@@ -2577,6 +2584,8 @@ main(int argc, char *argv[])
     /* required: setup the Julia context */
     jl_init();
     jl_eval_string("@show(cglobal(:keys))");
+    jl_module_t* DWL_julia = (jl_module_t*)jl_load(jl_main_module, "dwl.jl");
+    keybinding_julia = jl_get_function(DWL_julia, "keybinding");
 
 	// Wayland requires XDG_RUNTIME_DIR for creating its communications
 	// socket
