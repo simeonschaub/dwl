@@ -48,6 +48,9 @@
 #include <wlr/xwayland.h>
 #endif
 
+#include <julia.h>
+JULIA_DEFINE_FAST_TLS // only define this once, in an executable (not in a shared library) if you want fast code.
+
 /* macros */
 #define BARF(fmt, ...)		do { fprintf(stderr, fmt "\n", ##__VA_ARGS__); exit(EXIT_FAILURE); } while (0)
 #define EBARF(fmt, ...)		BARF(fmt ": %s", ##__VA_ARGS__, strerror(errno))
@@ -2571,6 +2574,10 @@ main(int argc, char *argv[])
 	if (optind < argc)
 		goto usage;
 
+    /* required: setup the Julia context */
+    jl_init();
+    jl_eval_string("@show(cglobal(:keys))");
+
 	// Wayland requires XDG_RUNTIME_DIR for creating its communications
 	// socket
 	if (!getenv("XDG_RUNTIME_DIR"))
@@ -2578,6 +2585,7 @@ main(int argc, char *argv[])
 	setup();
 	run(startup_cmd);
 	cleanup();
+    jl_atexit_hook(0);
 	return EXIT_SUCCESS;
 
 usage:
