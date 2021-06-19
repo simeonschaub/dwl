@@ -238,16 +238,16 @@ static void destroylayersurfacenotify(struct wl_listener *listener, void *data);
 static void destroynotify(struct wl_listener *listener, void *data);
 static Monitor *dirtomon(enum wlr_direction dir);
 static void focusclient(Client *c, int lift);
-static void focusmon(const Arg *arg);
-static void focusstack(const Arg *arg);
+void focusmon(const Arg *arg);
+void focusstack(const Arg *arg);
 static void fullscreennotify(struct wl_listener *listener, void *data);
 static Client *focustop(Monitor *m);
-static void incnmaster(const Arg *arg);
+void incnmaster(const Arg *arg);
 static void inputdevice(struct wl_listener *listener, void *data);
 static int keybinding(uint32_t mods, xkb_keysym_t sym);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
-static void killclient(const Arg *arg);
+void killclient(const Arg *arg);
 static void maplayersurfacenotify(struct wl_listener *listener, void *data);
 static void mapnotify(struct wl_listener *listener, void *data);
 static void monocle(Monitor *m);
@@ -261,7 +261,7 @@ static void outputmgrtest(struct wl_listener *listener, void *data);
 static void pointerfocus(Client *c, struct wlr_surface *surface,
 		double sx, double sy, uint32_t time);
 static void printstatus(void);
-static void quit(const Arg *arg);
+void quit(const Arg *arg);
 static void quitsignal(int signo);
 static void render(struct wlr_surface *surface, int sx, int sy, void *data);
 static void renderclients(Monitor *m, struct timespec *now);
@@ -276,31 +276,31 @@ static void setpsel(struct wl_listener *listener, void *data);
 static void setsel(struct wl_listener *listener, void *data);
 static void setfloating(Client *c, int floating);
 static void setfullscreen(Client *c, int fullscreen);
-static void setlayout(const Arg *arg);
-static void setmfact(const Arg *arg);
+void setlayout(const Arg *arg);
+void setmfact(const Arg *arg);
 static void setmon(Client *c, Monitor *m, unsigned int newtags);
 static void setup(void);
 static void sigchld(int unused);
-static void spawn(const Arg *arg);
-static void tag(const Arg *arg);
-static void tagmon(const Arg *arg);
+void spawn(const Arg *arg);
+void tag(const Arg *arg);
+void tagmon(const Arg *arg);
 static void tile(Monitor *m);
-static void togglefloating(const Arg *arg);
-static void togglefullscreen(const Arg *arg);
-static void toggletag(const Arg *arg);
-static void toggleview(const Arg *arg);
+void togglefloating(const Arg *arg);
+void togglefullscreen(const Arg *arg);
+void toggletag(const Arg *arg);
+void toggleview(const Arg *arg);
 static void unmaplayersurface(LayerSurface *layersurface);
 static void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
 static void unmapnotify(struct wl_listener *listener, void *data);
 static void updatemons(struct wl_listener *listener, void *data);
 static void updatetitle(struct wl_listener *listener, void *data);
-static void view(const Arg *arg);
+void view(const Arg *arg);
 static void virtualkeyboard(struct wl_listener *listener, void *data);
 static Client *xytoclient(double x, double y);
 static struct wlr_surface *xytolayersurface(struct wl_list *layer_surfaces,
 		double x, double y, double *sx, double *sy);
 static Monitor *xytomon(double x, double y);
-static void zoom(const Arg *arg);
+void zoom(const Arg *arg);
 
 /* variables */
 static const char broken[] = "broken";
@@ -1202,8 +1202,6 @@ inputdevice(struct wl_listener *listener, void *data)
 }
 
 const int KEYS_LEN = LENGTH(keys);
-//const wlr_keyboard_modifier _WLR_MODIFIER_CAPS = WLR_MODIFIER_CAPS;
-const uint32_t _WLR_MODIFIER_CAPS = WLR_MODIFIER_CAPS;
 static jl_function_t* keybinding_julia;
 
 int
@@ -1224,8 +1222,10 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	//	}
 	//}
 	//return handled;
+    //printf("%x\n", sym);
     void *ptr[] = {&mods, &sym};
-    return jl_unbox_int32(jl_call1(keybinding_julia, jl_box_voidpointer(ptr)));
+    //return jl_unbox_int32(jl_call1(keybinding_julia, jl_box_voidpointer(ptr)));
+    return jl_unbox_int32(jl_call2(keybinding_julia, jl_box_uint32(mods), jl_box_uint32(sym)));
 }
 
 void
