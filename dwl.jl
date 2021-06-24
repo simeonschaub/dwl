@@ -12,6 +12,86 @@ struct Key
     arg::Arg
 end
 
+struct wl_list{T}
+    next::Ptr{wl_list{T}}
+    prev::Ptr{wl_list{T}}
+end
+
+Base.@pure _fieldoffset(T::DataType, member::Symbol) = fieldoffset(T, findfirst(==(member), fieldnames(T)))
+function unsafe_foreach(f, start::Ptr{wl_list{T}}; member=:link) where {T}
+    state = start
+    while (state = unsafe_load(@show state).next) !== start
+        ptr::Ptr{T} = state - _fieldoffset(T, member)
+        f(ptr)
+    end
+end
+
+struct wl_listener
+    link::wl_list{wl_listener}
+    notify::Ptr{Cvoid} # function pointer
+end
+struct wlr_box
+    x::Cint
+    y::Cint
+    width::Cint
+    height::Cint
+end
+
+macro fix_align(ex)
+    @assert Meta.isexpr(ex, :struct)
+    @assert Meta.isexpr(ex.args[3], :block)
+    wl_listener_fields = Symbol[]
+    return esc(quote
+        $(Expr(:struct,
+            ex.args[1], ex.args[2],
+            Expr(:block, Base.mapany(ex.args[3].args) do ex
+                Meta.isexpr(ex, :(::)) && ex.args[2] === :wl_listener || return ex
+                field = ex.args[1]
+                push!(wl_listener_fields, field)
+                return quote
+                    $(Symbol(field, :_link))::wl_list{wl_listener}
+                    $(Symbol(field, :_notify))::Ptr{Cvoid} # function pointer
+                end
+            end...),
+        ))
+        function Base.getproperty(x::$(ex.args[2]), s::Symbol)
+            $(Expr(:block, Base.mapany(wl_listener_fields) do field
+                :(s === $field && return wl_listener(x.$(Symbol(field, :_link)), x.$(Symbol(field, :_link))))
+            end...))
+            return getfield(x, s)
+        end
+    end)
+end
+@fix_align struct Client
+    link::wl_list{Client}
+    flink::wl_list{Client}
+    slink::wl_list{Client}
+    surface::Ptr{Cvoid} # TODO
+    commit::wl_listener
+    map::wl_listener
+    umap::wl_listener
+    destroy::wl_listener
+    set_title::wl_listener
+    fullscreen::wl_listener
+    geom::wlr_box
+    mon::Ptr{Cvoid} # TODO
+    # ifdef XWAYLAND
+        type::Cuint
+        activate::wl_listener
+        configure::wl_listener
+    #
+    bw::Cint
+    tags::Cuint
+    isfloating::Cint
+    resize::UInt32
+    prevx::Cint
+    prevy::Cint
+    prevwidth::Cint
+    prevheight::Cint
+    isfullscreen::Cint
+end
+const clients = cglobal(:clients, wl_list{Client})
+
 keysym(x) = ccall((:XStringToKeysym, "libxkbfile"), xkb_keysym_t, (Cstring,), string(x))
 # from wlr_keyboard.h
 const WLR_MODIFIER_SHIFT = xkb_keysym_t(1 << 0)
@@ -72,6 +152,25 @@ struct Spawn
     end
 end
 function (s::Spawn)()
+    try
+        unsafe_foreach(x -> println(x, '\n'), clients)
+        println()
+        println()
+        client = @ccall selclient()::Ptr{wl_list{Client}}
+        @show client
+        println()
+        if client != C_NULL
+            @show unsafe_load(Ptr{Client}(client))
+            println()
+            unsafe_foreach(client) do x
+                x === clients && continue
+                println(x, '\n')
+            end
+        end
+    catch e
+        @show e
+    end
+
     @ccall spawn(s.ptrs::Vector{Ptr{UInt8}})::Cvoid
     GC.@preserve s
 end

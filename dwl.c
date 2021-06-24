@@ -270,7 +270,7 @@ static void rendermon(struct wl_listener *listener, void *data);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void run(char *startup_cmd);
 static void scalebox(struct wlr_box *box, float scale);
-static Client *selclient(void);
+Client *selclient(void);
 static void setcursor(struct wl_listener *listener, void *data);
 static void setpsel(struct wl_listener *listener, void *data);
 static void setsel(struct wl_listener *listener, void *data);
@@ -310,7 +310,7 @@ static struct wlr_renderer *drw;
 static struct wlr_compositor *compositor;
 
 static struct wlr_xdg_shell *xdg_shell;
-static struct wl_list clients; /* tiling order */
+struct wl_list clients; /* tiling order */
 static struct wl_list fstack;  /* focus order */
 static struct wl_list stack;   /* stacking z-order */
 static struct wl_list independents;
