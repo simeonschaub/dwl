@@ -7,7 +7,7 @@ PREFIX = /usr/local
 # Uncomment to build XWayland support
 CFLAGS += -DXWAYLAND
 
-JL_BIN = ./julia/julia
+JL_BIN = julia-latest #~/Documents/Julia/julia/julia #./julia/julia
 JL_SHARE = $(shell $(JL_BIN) -e 'print(joinpath(Sys.BINDIR, Base.DATAROOTDIR, "julia"))')
 CFLAGS   += $(shell $(JL_BIN) $(JL_SHARE)/julia-config.jl --cflags)
 CXXFLAGS += $(shell $(JL_BIN) $(JL_SHARE)/julia-config.jl --cflags)
